@@ -2,7 +2,7 @@
 layout: post
 title: "[译]Redis集群教程"
 date: 2020-06-21 20:26:58+08:00
-categories: jekyll update
+categories: work tech
 ---
 **背景**
 
