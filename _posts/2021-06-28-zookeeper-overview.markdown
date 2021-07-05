@@ -9,7 +9,7 @@ categories: work tech
 **-----分割线-----**
 
 ## ZooKeeper 概述
-[toc]
+1.[ZooKeeper 一种针对分布式程序的分布式协同服务](#ZooKeeper 一种针对分布式程序的分布式协同服务)
 
 ---
 ### ZooKeeper 一种针对分布式程序的分布式协同服务
@@ -25,7 +25,9 @@ ZooKeeper是一种分布式的，开源的分布式程序协调服务。他提�
 ZooKeeper的实现注重高性能，高可用，严格有序访问。ZooKeeper性能方向的表现意味着他可以用作大型的，分布式系统。可用性方面保证其不会陷入单点故障。严格有序意味着复杂同步原语可以在客户端实现。
 
 **ZooKeeper**是主从结构。类似于他所协调的分布式进程，ZooKeeper本身旨在通过一组成为集合(ensemble)的主机进行复制。
+
 ![ZooKeeper ensemble](https://zookeeper.apache.org/doc/r3.7.0/images/zkservice.jpg)
+
 组成ZooKeeper服务的各个服务必须都互相知道。他们维护了一个内存的状态镜像，以及持久存储中的事务日志和快照。只要大多数服务器可用，ZooKeeper的服务就可用。
 
 客户端链接一个单独的ZooKeeper服务。这个客户端维护了一个TCP链接，这个TCP链接发送请求，得到回应，得到监视事件，发送心跳。如果这个tcp断掉，他将链接一个不同的服务。
@@ -40,6 +42,7 @@ ZooKeeper的实现注重高性能，高可用，严格有序访问。ZooKeeper�
 ZooKeeper提供的命名空间和标准文件系统非常像。名字是被斜线(/)分隔的路径元素的一个序列。每个ZooKeeper的命名空间被一个路径标志。
 
 ZooKeeper的分层命名空间。
+
 ![ZooKeeper's Hierarchical namespace](https://zookeeper.apache.org/doc/r3.7.0/images/zknamespace.jpg)
 
 ### 节点和临时节点
