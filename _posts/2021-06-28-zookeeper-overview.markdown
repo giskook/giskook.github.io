@@ -74,6 +74,3 @@ ZooKeeper的设计目标是提供一个简单的编程接口。因此，他仅�
 * *set data*：向node中写数据
 * *get children*：检索节点的子节点列表
 * *sync*：等待数据传播
-
-
-
