@@ -74,3 +74,21 @@ ZooKeeper的设计目标是提供一个简单的编程接口。因此，他仅�
 * *set data*：向node中写数据
 * *get children*：检索节点的子节点列表
 * *sync*：等待数据传播
+
+### 实现
+
+ZooKeeper组件展示了ZooKeeper服务的高层级组件。除了请求处理器外，组成ZooKeeper服务的每个服务器复制每个组件的自己的副本。
+
+![ZooKeeper Components](https://zookeeper.apache.org/doc/r3.7.0/images/zkcomponents.jpg)
+
+被复制的数据库是一个内存数据库，包含了整个数据树。更新被记录到磁盘为了可恢复性，写入在应用到内存数据库前被序列化到磁盘。
+
+每个ZooKeeper服务器服务客户。客户端链接到一个服务器提交请求。读请求被每个服务器数据库的本地备份服务，改变服务状态的请求，写请求被一个一致协议(agreement protocol)处理。
+
+作为一致协议(agreement protocol)的一部分，从客户端来的所有写请求都被转发给一个单独服务，被叫做*领导(leader)*。其余的ZooKeeper服务被叫做*跟随者(followers)*，跟随者(followers)接收来自领导(leader)的消息提议，并就消息传达达成一致。消息层(messaging layer)维护领导(leader)失败时的替换，同时同步领导者的跟随者。
+
+ZooKeeper使用了一个原子性的消息协议。由于消息层(messaging layer)是原子性的，ZooKeeper可以保证本地备份不出现偏离。当领导者接收到一个写请求，他计算出当这个写被应用后系统应该处于何种状态，同时将捕获的新状态放到一个事务中传递出去。
+
+### 用法
+
+ZooKeeper的编程接口是故意设计为如此简单的。但是，使用他你可以实现高层阶的操作，比如同步原语，分组关系，隶属关系等。
