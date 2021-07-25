@@ -1,0 +1,23 @@
+---
+layout: post
+title: "刷题笔记"
+date: 2021-07-25 09:12:24+08:00
+categories: work tech
+---
+
+### [53.最大子序和](https://leetcode-cn.com/problems/maximum-subarray/)
+
+* 思路:
+	* 题目要求是子序和，不要对题目进行扩展。就求子序和。
+	* 子序和默认为第一个元素。
+	* sum默认为0。
+	* 子序和是sum中的最大值。
+	* 要将sum作为一个整体来看。
+	* sum与0值的比较表示增益。
+	
+
+
+### [1.两数之和](https://leetcode-cn.com/problems/two-sum/)
+
+* 思路：
+	* 数组指针向前，map记录，不要在遍历之前就用map记录。map记录遍历过的即可。
