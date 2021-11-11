@@ -5,10 +5,10 @@ date: 2021-11-09 20:02:24+08:00
 categories: work tech
 ---
 
-## 【译】kafka简介
-
 ----------------
+
 [原文地址](https://kafka.apache.org/documentation/#introduction) 关注design部分
+
 ----------------
 
 ### 动机
