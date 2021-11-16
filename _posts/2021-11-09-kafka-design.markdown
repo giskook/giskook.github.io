@@ -33,7 +33,7 @@ categories: work tech
 
 kafka严重依赖文件系统存储和缓存消息。人们通常有一个"磁盘很慢"的意识，对使用文件系统作为持久化结构持怀疑态度。事实上磁盘要比人们期待的慢得多或快得多，这取决于使用方式；好的磁盘设计的存储结构可以像网络一样快。
 
-过去十年关于磁盘性能的事实是硬盘驱动的吞吐量和磁盘寻址延迟之间的巨大差异。在配置7200转，SATA RAID-5 array的一堆磁盘[JBOD](https://en.wikipedia.org/wiki/Non-RAID_drive_architectures)顺序写入的速率为600M/s而随机写的速率为100k/s，相差6000倍。在硬盘所有的使用模式中这些线性的读写是最容易预测的，同时被操作系统很好的优化了。现代的操作系统提供预读(read-ahead)和后写(write-behind)技术，以要读去的大小的倍数来读取数据，激昂小块的写组成一个大块的写写入磁盘。这个问题的进一步讨论可以在[ACM Queue article](http://queue.acm.org/detail.cfm?id=1563874)中找到，他们实际上发现来这片文章，某种情况下顺序的硬盘访问设置比随机的内存访问更快[sequential disk access can in some cases be faster than random memory access!](http://deliveryimages.acm.org/10.1145/1570000/1563874/jacobs3.jpg)
+过去十年关于磁盘性能的事实是硬盘驱动的吞吐量和磁盘寻址延迟之间的巨大差异。在配置7200转，SATA RAID-5 array的一堆磁盘[JBOD](https://en.wikipedia.org/wiki/Non-RAID_drive_architectures)顺序写入的速率为600M/s而随机写的速率为100k/s，相差6000倍。在硬盘所有的使用模式中这些线性的读写是最容易预测的，同时被操作系统很好的优化了。现代的操作系统提供预读(read-ahead)和后写(write-behind)技术，以要读去的大小的倍数来读取数据，积累小块的写组成一个大块的写写入磁盘。这个问题的进一步讨论可以在[ACM Queue article](http://queue.acm.org/detail.cfm?id=1563874)中找到，他们实际上发现了这篇文章，某种情况下顺序的硬盘访问设置比随机的内存访问更快[sequential disk access can in some cases be faster than random memory access!](http://deliveryimages.acm.org/10.1145/1570000/1563874/jacobs3.jpg)
 
 为了弥补性能差异，现代操作系统在使用主存作为硬盘缓存的时候表现的很激进。一个现代的操作系统会很高兴将所有的可用内存转移为硬盘的缓存，当然当内存被声明使用时这会伴随少量的额外性能损失。所有的硬盘的读写都会通过这个统一的缓存。除非使用直接IO(dirct I/O)，否则这个特性很难关闭，即使进程内部缓存了一份数据，这份数据仍然会被操作系统重复缓存在页缓存中。有效的将所有的东西都缓存了两次。
 
