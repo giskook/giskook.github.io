@@ -144,3 +144,15 @@ kafka用不同的方式处理。我们的topic被分到一组完全有序的分�
 可扩展的持久化允许consumer可以定期处理批数据，定期将批量数据加载到离线系统，例如Hadoop或者关系型数据库。
 
 在Hadoop的例子中我们通过将负载分拆到各个map任务上，实现并行化处理数据。每个节点/主题/分区组合一个，允许完全并行加载。Hadoop提供任务管理，任务失败后可以重启，而不用担心重复数据-他们仅仅从原位重启。
+
+**静态成员关系 Static MemberShip**
+
+静态成员关系旨在提高流应用，consumer分组和其他基于分组rebanlance协议的应用的可用性。rebanlance协议依赖于分组协调器给组内成员分配实体ID。这些生成的ID是临时性的，当成员重启或这重新加入的时候将会改变。针对基于消费者的应用程序，这种“动态的成员关系“在管理员操作例如代码部署，配置更新或定期启动应用的过程中很很大程度的将任务重新分配给不同的实例。对于大型状态应用，重新分配任务会在处理任务前需要长时间恢复其本地状态。引起应用程序部分或完全不可用。为防止这种情况，kafka的组管理协议允许给成员提供持久化的实体ID。根据这些实体ID组成员关系保持不变，所以不会触发rebalance。
+
+如果你想使用静态成员关系：
+
+* 升级broker cluster和客户端应用到2.3或以上，同时保证升级后的brokers使用**inter.broker.protocol.version**大于2.3或以上。
+* 为一个组下的每个消费者实例配置**ConsumerConfig#GROUP_INSTANCE_ID_CONFIG**为唯一值。
+* 对于kafka stream应用程序，为每个程序设置**ConsumerConfig#GROUP_INSTANCE_ID_CONFIG**为唯一值，与实例使用的线程数无关。
+
+如果使用的broker小于2.3，但是在客户端选择设置了**ConsumerConfig#GROUP_INSTANCE_ID_CONFIG**，程序将探测到并抛出一个UnsupportedException异常。如果不小心给不同的实例设置了重复的id，broker的围栏机制将抛出异常**org.apache.kafka.common.errors.FencedInstanceIdException**，通知你的重复的客户端立即关闭。更多详情[KIP-345](https://cwiki.apache.org/confluence/display/KAFKA/KIP-345%3A+Introduce+static+membership+protocol+to+reduce+consumer+rebalances)
