@@ -174,3 +174,27 @@ kafka的语义是直接的。当发送消息时，我们有一个消息被“com
 0.11.0.0之前，如果一个producer没有收到消费是否提交的反馈，除了重新发送这个消息之外几乎没有其他选择。这个提供了at-last-once语义，因为如果原始请求已经成功，重发的消息可能又被写入日志一遍。从0.11.0.0开始kafka生产者支持幂等传输选项，以保证重发的消息不会在日志中导致重复的条目。为了实现幂等，broker给每个producer分配了一个ID，并且被producer发送的使用同一个序列号的消息会被broker删除。同样的从0.11.0.0开始，producer支持使用类似事务的语法发送消息到多个topic：要么所有的消息都成功写入，要么所有的消息都没有写入。主要的使用场景是kafka topic之间恰好一次（exactly-once）的场景（描述如下）。
 
 并不是所有的使用场景要求这么强的一致性。对用延迟敏感的使用场景我们允许producer指定他所想要的durability level。如果producer指定他想让消息变为已提交状态，那么可能需要10ms的时间。然而producer可以指定完全异步的发送或者指定只想等到领导者节点（不必须让跟随者节点）收到这个消息。
+
+现在让我们从consumer角度描述语义。所有副本有带有相同便宜的相同日志。consumer控制日志中的位置。如果consumer用不崩溃我们可以选择将offset存储在内存中，但是如果consumer崩溃了，我们希望让另外一个进程处理这个topic下分区的消息，当启动进程时我们需要选择一个恰当的起始位置。我们说consumer读取了一些消息 - 处理消息以及更新offset时他有几个选项。
+
+1. consumer可以读取消息，在日志中保存位置，然后处理消息。在这种情况下，有这样的一种可能，consumer在存储位置成功，但是在保存消息处理结果输出的时候崩溃。这种情况下新的进程将在存储的位置之后进行处理，该位置之前的一小部分消息将被丢失。这对应"至多一次（at-most-once）"语义，在consumer失败的情况下，消息有可能不会被处理。
+
+2. consumer可以读取消息，处理消息再保存位置。这种情况下有可能出现处理完消息，保存处理结果后，在保存位置前发生崩溃。这种情况下当新的进程将重复处理已经处理过的消息。这种情况下consumer的失败对应的是“至少一下（at-last-once）"语义。多数情况下消息有一个主键因此更新是幂等的（收到两次相同的消息，并使用他自己的副本覆盖自己的）。
+
+那么恰好一次的语义呢（正是你想要的）？当从一个kafka的topic中消费同时生产到另外一个topic（就像在[Kafka Streams](https://kafka.apache.org/documentation/streams)应用），我们可以利用在前面提到过的0.11.0.0新的事务生产者特性。消费者的位置被作为消息存储在topic中，因此我们可以和输出接收到处理数据的topic在同一个事务中给kakfa写这个offset。如果事务异常退出，consumer的offset将会恢复到原值，同时根据“隔离级别（isolation level）“产生的输出到另外topic的数据将对consumer不可见。在默认的”读未提交（read_uncommitted）“隔离级别对用consumer的所有消息都可见，即便是异常退出的事务的消息，但是在"读提交（read_committed）“隔离级别，consumer只会返回事务中已经是提交的消息（以及不是事务一部分的消息）。
+
+当写入外部系统时，实际的限制是将consumer写入的位置与实际的输出的内容进行协调。实现这一点的经典方法是在消费者位置的存储和消费者输出的存储之间引入两阶段提交（two-phase commit）。但是可以让consumer的位置和消息输出存储在同一个地方这样更简单，更通用。consumer的offset和消息输出写入同一个地方这种策略很好，因为大部分的consumer的输出系统不知道两阶段提交（two-phase commit）。举个例子，考虑[Kafka Connect](https://kafka.apache.org/documentation/#connect)connector会将读取的数据和consumer的offset一并填充到HDFS，这样保证消费的数据和偏移要么同时写入，要么同时没写入。对于要求更强语义的很多其他数据系统我们使用了相同的策略，同时每个消息的主键不允许重复。
+
+kafka非常有效的支持了[kafka streams](https://kafka.apache.org/documentation/streams)的exactly-once语义，事务性producer/consumer通常被用来能够在kafka主题之间提供exactly-once传递语义。其他目标系统的exactly-once语义需要与这样的系统配合，kafka提供了consumer的offset是这变的可行（查看[Kafka Connect](https://kafka.apache.org/documentation/#connect))。除此之外kafka默认提供at-last-once语义，同时在处理一批消息之前允许客户通过关闭producer的重试并在consuer中提交偏移量来实现at-most-once语义。
+
+### 副本
+
+kafka为topic下的partiion跨可配置数量的服务器上进行日志备份（可以基于逐个topic设置副本因子）。这样在集群中服务器崩溃后可以自动故障转移到其他副本，因此在出现故障时消息仍然可用。
+
+其他的消息系统提供了副本相关的特性，但是在我们（totally biased）看来，这似乎是一个附加的东西，没有被大量使用，有很大的负面作用：副本不处于活跃状态，吞吐量严重受影响，需要极其繁琐的人工配置等。默认情况下kafka使用副本。-事实上我们使用有副本的topic来实现非复制的topic，其副本因子是1。
+
+副本的单位是topic partition。在没有失败的情况下，kakfa中的每个partition有一个leader和0个或多个follower。包含leader和副本总数组成副本因子配置。所有的读写操作都进入partition的leader。通常，partition比broker多很多，leader在broker上均匀分配。follower的log和leader的log完全一样-有同样的offset和相同顺序的消息（但是，当然，在给定的时间点leader在其日志文件末尾都有尚未复制的消息）。
+
+follower就像普通的kafka的consumer一样从leader消费消息，并应用到他们自己的日志。follower从leader拉消息有一个好处，允许follower自然的将日志批量聚合到他们的日志。
+
+
