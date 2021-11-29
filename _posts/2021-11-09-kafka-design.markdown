@@ -197,4 +197,22 @@ kafka为topic下的partiion跨可配置数量的服务器上进行日志备份�
 
 follower就像普通的kafka的consumer一样从leader消费消息，并应用到他们自己的日志。follower从leader拉消息有一个好处，允许follower自然的将日志批量聚合到他们的日志。
 
+就像大多数自动进行故障转移的分布式系统，对节点是否“alive“有定义。对kafka节点来说活动对节点有两个条件：
+
+1. 节点必须和zookeeper保持会话（通过zookeeper的心跳机制保证）。
+2. 如果follower，他必须复制leader上的消息复制，同时不能落后特别多。
+
+我们参考满足如上两个条件的节点为“同步中（in sync）”，避免使用含糊不清的“alive“或“failed”。leader持续跟踪“同步中（in sync)"的节点集合。如果一个节点死掉了，堵住了或者消息很落后，leader将把他从in sync集合中移除。堵住或落后的副本被replica.lag.time.max.ms配置设置。
+
+在分布式系统术语中我们仅尝试处理“失败/恢复（fail/recover）“类型的错误，其中节点突然停止工作然后恢复工作（也许节点并不知道他们曾经失败）。kafka并不处理所谓的“拜占庭“将军问题（“Byzantine“ failures），出现“拜占庭”将军问题的节点将产生恶意或者随意的回应（可能由于bug或者foul play）。
+
+我们现在可以更加精确的定义消息被提交，当分区中所有的in sync的副本将消息写入log时，我们认为是消息被提交。只有提交的消息才能被发送给consumer。这意味着consumer不用担心如果这个leader失败可能导致的消息丢失。另一方面producer可以选择是否等待消息被提交，依赖于他的在延迟（latency）和持久性（durability）之间的权衡。这个权衡可以在producer的ack setting中控制。注意topic有一个in sync副本的”最小数量（minimum number）“设置，如果producer请求写入完全的in-sync的副本时会检查这个设置。如果producer不要求特别严格的确认，消息可以被commited，消费，即使同步副本的数量低于最小值。（例如他可以低到只保留leader）。
+
+kafka提供了只要消息被提交就不会丢失的保证，只要同步副本中始终至少有一个处于活动状态。
+
+节点失败出现短暂故障转移期间，kafka仍然是保持可用的。但是如果发生网络分区（network partitions）后，kafka将不可用。
+
+**备份日志：仲裁，中断处理和状态机（天啊！）Replicated Logs:Quorums, ISRs, and State Machine(Oh my!)**
+
+kafka分区的核心是一个备份的日志。
 
