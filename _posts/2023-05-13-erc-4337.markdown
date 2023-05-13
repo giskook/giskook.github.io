@@ -1,0 +1,41 @@
+---
+layout: post
+title: "[译]ERC 4337:不改变Ethereum协议的账户抽象"
+date: 2023-05-13 21:27:24+08:00
+categories: work tech
+---
+[原文链接](https://medium.com/infinitism/erc-4337-account-abstraction-without-ethereum-protocol-changes-d75c9d94dc4a)
+
+**----------**
+
+
+* [ERC 4337:不改变Ethereum协议的账户抽象](#ERC 4337:不改变Ethereum协议的账户抽象)
+   * [前言](#前言)
+   * [ERC 4337如何工作](#ERC 4337如何工作)
+   * [节点和临时节点](#节点和临时节点)
+   * [有条件的更新和监视](#有条件的更新和监视)
+   * [保证](#保证)
+   * [简单的API](#简单的API)
+   * [实现](#实现)
+   * [用法](#用法)
+
+## 前言
+
+[账户抽象](https://ethereum.org/en/roadmap/account-abstraction/)长期以来一直是Ethereum开发社区的梦想。抽象账户可以为个人用户钱包实现__验证逻辑__(nonces, 签名等)，而不再使用EVM代码去实现__应用程序逻辑__。这会为钱包设计的创意打开大门，提供一些重要的特性：
+* 多签和[社交恢复](https://vitalik.ca/general/2021/01/11/recovery.html)
+* 更加高效和简单的签名算法(eg. Schnorr,BLS)
+* 后量子安全签名算法(eg.Lamport,Winternize)
+* 可升级性
+
+如今使用一个智能合约钱包可以完成所有这些事情，但以太坊协议本身要求将所有内容打包在源自ECDSA安全保护的外部拥有账户 (EOA) 的交易中,这一事实使得这变得非常困难。每个来自EOA账户的用户操作都将被交易包裹，增加21000的额外gas负担。用户要么需要有另外一个单独的有ETH余额的EOA账户去付gas,或者依赖一个中继系统，而中继系统通常是集中式的。
+
+[EIP 2938](https://eips.ethereum.org/EIPS/eip-2938)是修复该问题的一种方式，通过介绍修改一些以太坊协议能够允许从合约地址而不是EOA地址发送顶层的以太坊交易。合约本身将有验证和付gas的逻辑，这些逻辑矿工将检查。然而这需要对协议进行一次重大的修改，而目前协议开发人员正在重点关注the merge和可扩展性。在我们新的提案([ERC 4337](https://github.com/ethereum/EIPs/blob/3fd65b1a782912bfc18cb975c62c55f733c7c96e/EIPS/eip-4337.md))中，我们提供了一个不修改共识协议层但是有同样收益的方式。
+
+## ERC 4337如何工作
+
+取代修改共识协议本身的逻辑，我们在更高逻辑层级上复制交易池功能。用户发送`UserOperation`对象，包含了用户的意图，签名以及为了验证的其他数据。矿工或使用Flashbots的Bundler打包一组`UserOperation`对象到一个单独的"bundle transaction",这个"bundle transaction"被包含到Ethereum区块中。
+
+![UserOperation mempool](https://miro.medium.com/v2/resize:fit:1400/format:webp/0*IThEWr1KugkIQHrf.png")
+
+
+
