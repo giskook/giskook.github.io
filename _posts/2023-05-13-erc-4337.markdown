@@ -29,7 +29,7 @@ categories: work tech
 
 取代修改共识协议本身的逻辑，我们在更高逻辑层级上复制交易池功能。用户发送`UserOperation`对象，包含了用户的意图，签名以及为了验证的其他数据。矿工或使用Flashbots的Bundler打包一组`UserOperation`对象到一个单独的"bundle transaction",这个"bundle transaction"被包含到Ethereum区块中。
 
-![UserOperation mempool](../images/erc-4377/user_operation_mempool.webp)
+![UserOperation mempool](../images/erc-4337/user_operation_mempool.webp)
 
 
 
