@@ -3,7 +3,7 @@ layout: post
 title: "[译]ERC 4337:不改变Ethereum协议的账户抽象"
 date: 2023-05-13 21:27:24+08:00
 categories: work tech
----
+-------
 [原文链接](https://medium.com/infinitism/erc-4337-account-abstraction-without-ethereum-protocol-changes-d75c9d94dc4a)
 
 **----------**
@@ -12,12 +12,6 @@ categories: work tech
 * [ERC 4337:不改变Ethereum协议的账户抽象](#ERC 4337:不改变Ethereum协议的账户抽象)
    * [前言](#前言)
    * [ERC 4337如何工作](#ERC 4337如何工作)
-   * [节点和临时节点](#节点和临时节点)
-   * [有条件的更新和监视](#有条件的更新和监视)
-   * [保证](#保证)
-   * [简单的API](#简单的API)
-   * [实现](#实现)
-   * [用法](#用法)
 
 ## 前言
 
@@ -35,7 +29,7 @@ categories: work tech
 
 取代修改共识协议本身的逻辑，我们在更高逻辑层级上复制交易池功能。用户发送`UserOperation`对象，包含了用户的意图，签名以及为了验证的其他数据。矿工或使用Flashbots的Bundler打包一组`UserOperation`对象到一个单独的"bundle transaction",这个"bundle transaction"被包含到Ethereum区块中。
 
-![UserOperation mempool](https://miro.medium.com/v2/resize:fit:1400/format:webp/0*IThEWr1KugkIQHrf.png")
+![UserOperation mempool](../images/erc-4377/user_operation_mempool.webp)
 
 
 
