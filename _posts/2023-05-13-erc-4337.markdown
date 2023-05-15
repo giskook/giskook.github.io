@@ -31,5 +31,29 @@ categories: work tech
 
 ![UserOperation mempool](../images/erc-4337/user_operation_mempool.webp)
 
+bundler用ETH为bundler交易支付gas费，并通过作为所有单个`UserOperation`执行的一部分支付的费用获得补偿。Bundlers根据现有矿工mempool中打包原则，将相似fee-prioritization逻辑的`UserOperation`包含在一起。一个`UserOperation`看起来像一个交易；他是一个ABI编码的结构，包含以下字段：
+
+* `sender`:发起操作的wallet
+* `nonce`和`signature`:传递到wallet验证函数的参数，因此wallet可以验证一个操作
+* `initCode`:如果wallet还不存在，用于创建钱包的初始化代码
+* `callData`:实际执行步骤用什么数据调用钱包
+
+其余的字段用来做gas和fee的管理；完整字段可以在[ERC 4337](https://github.com/ethereum/EIPs/blob/3fd65b1a782912bfc18cb975c62c55f733c7c96e/EIPS/eip-4337.md)中查看。
+
+wallet是一个智能合约，要求有两个函数：
+
+* `validateUserOp`,使用`UserOperation`作为输入。这个函数应该验证`UserOperation`的签名和nonce，支付fee，如果验证成功nonce增加，如果验证失败抛出异常。
+* 一个op执行函数，解析calldata为指令，使钱包做出相应的动作。该函数如何解释calldata以及结果是什么是完全开放式的；但是我们期望最常见的操作应该是解释calldata为指令，让钱包进行一次或多次调用。
+
+为了简化钱包逻辑，许多复杂的智能合约确保安全所需要的trickery不在wallet本身，但在一个叫做*entry point*的全局合约。`validateUserOp`和执行函数将限制为`require(msg.sender == ENTRY_POINT)`，因此仅受信任的entry point可以发起wallet执行任何操作或只支付gas。entry point仅在带有调用数据calldata的`UserOperation`完成`validateUserOp`后才对钱包进行任意调用，所以这足够保护钱包免受攻击。当wallet不存在时，entery point同样负责使用`initCode`去创建钱包。
+
+![Entry ponit control flow when running handleops](../images/erc-4337/entry_point_control_flow_when_running_handle_ops.webp)
+
+__Entry ponit control flow when running `handleOps`__
+
+mempool节点和bundlers在关于`validateUserOp`可以做什么的时候有一些限制：特别是，`validateUserOp`执行不能读写其他合约的存储，不能使用环境相关opcodes，比如`TIMESTAMP`，不能调用其他合约，除非这些被调用的合约可证明不会自毁。需要保证bundlers和`UserOperation` mempool节点的对`validateUserOp`的__模拟执行__针对指定的`UserOperation`是ok的，可以包含或转发，且和之后实际包含在以后区块中有相同的效果。
+
+如果`UserOperation`的验证模拟成功，`UserOperation`可以保证被包含直到`sender`账户有其他内部状态变化（由于相同sender的另外一个`UserOperation`或者另外的合约调用到sender；在任一情况下，该账户触发此条件需要在链上花费7500+gas）。另外，一个`UserOperation`为`validateUserOp`阶段指定gas limit，mempool节点和bundlers将拒绝他，除非这个gas limit非常小（比如，低于200000）。这些限制复制于现行的Ethereum交易的关键属性，以防止DoS攻击。Bundlers和mempool节点可以使用当前Ethereum交易的相似逻辑，以决定是否包含或转发一个`UserOperation`。
+
 
 
