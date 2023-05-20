@@ -4,10 +4,10 @@ title: "[译]ERC 4337:不改变Ethereum协议的账户抽象"
 date: 2023-05-13 21:27:24+08:00
 categories: work tech
 -------
+
 [原文链接](https://medium.com/infinitism/erc-4337-account-abstraction-without-ethereum-protocol-changes-d75c9d94dc4a)
 
 **----------**
-
 
 * [ERC 4337:不改变Ethereum协议的账户抽象](#ERC 4337:不改变Ethereum协议的账户抽象)
    * [前言](#前言)
@@ -55,5 +55,11 @@ mempool节点和bundlers在关于`validateUserOp`可以做什么的时候有一�
 
 如果`UserOperation`的验证模拟成功，`UserOperation`可以保证被包含直到`sender`账户有其他内部状态变化（由于相同sender的另外一个`UserOperation`或者另外的合约调用到sender；在任一情况下，该账户触发此条件需要在链上花费7500+gas）。另外，一个`UserOperation`为`validateUserOp`阶段指定gas limit，mempool节点和bundlers将拒绝他，除非这个gas limit非常小（比如，低于200000）。这些限制复制于现行的Ethereum交易的关键属性，以防止DoS攻击。Bundlers和mempool节点可以使用当前Ethereum交易的相似逻辑，以决定是否包含或转发一个`UserOperation`。
 
+## 和常规以太坊mempool相比，这种设计增加/保持/牺牲了哪种属性
 
+保持属性：
 
+* **无中心化角色**；所有的事情都是通过端对端的mempool完成
+* **DoS安全**（通过模拟检查的`UserOperation`保证是可包含的，直到`sender`有另一个状态变化，这将要求攻击者为每个`sender`支付7500+gas)
+* **没用用户端钱包设置的复杂性**: 用户不用关心他们的钱包合约是否已经发布；钱包存在于特定的CREATE2地址中，如果钱包在第一个`UserOperation`前不存在，则自动创建一个
+* **完全EIP 1559支持**,
