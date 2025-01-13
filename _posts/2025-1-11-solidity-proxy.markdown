@@ -4,7 +4,7 @@ title: "Upgradeable solidity contract"
 date: 2025-1-11 08:16:58+08:00
 categories: smart contract
 ---
-# Summary 
+# 1. Summary 
 
 * [The basis](#The basis)
 * [A few minor caveats](#A few minor caveats)
@@ -39,6 +39,7 @@ Design a contract:
 [Bank upgrade transaction](https://sepolia.etherscan.io/tx/0x9f5cd4a8acca3d2699285ef2e7578858516a71da93d216f0e375d1b8c414b104)
 
 # eth_getStorageAt
+
 Contracts' storage layouts 
 ```
 mapping(address => uint256) internal balances;
@@ -52,7 +53,9 @@ Storage layouts should be
 * owner 0x43Db1155C06548666E2928f4970694CA21B1835a 
 * withdrawalFee 1
 
-## For simple Variables: Stored sequentially in slots.
+## For simple Variables
+
+Stored sequentially in slots.
 ```
 cast storage 0x00CEDc793A6a48eb9e0bE53D79d9e983ab96A5E8 0x01
 ```
@@ -61,7 +64,9 @@ We got
 0x00000000000000000000000043db1155c06548666e2928f4970694ca21b1835a
 ```
 
-## For mappings, the storage location is calculated using:
+## For mappings
+
+the storage location is calculated using:
 ```
 keccak256(key.slotIndex)
 ```
