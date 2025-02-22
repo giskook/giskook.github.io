@@ -17,7 +17,7 @@ categories: smart contract
 
 # Hack steps on chain
 
-## 1. Deploy a contract in order to replace the proxy's implement contract.
+### 1. Deploy a contract in order to replace the proxy's implement contract.
 
 contract [0x96221423681A6d52E184D440a8eFCEbB105C7242](https://etherscan.io/address/0x96221423681A6d52E184D440a8eFCEbB105C7242)
 
@@ -41,7 +41,7 @@ def transfer(address _to, uint256 _value) payable:
 
 When call the contract's `transfer` it will set the storage 0 (address) to the `address`
 
-## 2. Target wallet contract
+### 2. Target wallet contract
 
 Addreess [0x1Db92e2EeBC8E0c075a02BeA49a2935BcD2dFCF4](https://etherscan.io/address/0x1db92e2eebc8e0c075a02bea49a2935bcd2dfcf4)
 
@@ -97,7 +97,7 @@ contract Proxy {
 }
 ```
 
-## 3. Replace the wallet's implement address 
+### 3. Replace the wallet's implement address 
 
 We don't know how the hacker get the signature, but finally he got it.
 
@@ -198,7 +198,7 @@ cast 4d 0xa9059cbb000000000000000000000000bdd077f651ebe7f7b3ce16fe5f2b025be29695
 
 Actually the `transfer` will replace the storage 0's address to [0xbDd077f651EBe7f7b3cE16fe5F2b025BE2969516](https://etherscan.io/address/0xbdd077f651ebe7f7b3ce16fe5f2b025be2969516)
 
-##4. Transfer asset
+### 4. Transfer asset
 
 Here's the transactions
 
