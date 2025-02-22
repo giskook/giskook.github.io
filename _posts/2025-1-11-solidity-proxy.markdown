@@ -6,9 +6,9 @@ categories: smart contract
 ---
 # 1. Summary 
 
-* [The basis](#The basis)
-* [A few minor caveats](#A few minor caveats)
-* [A proxy contract with OpenZeppelin](#A proxy contract with OpenZeppelin)
+* [The basis](#the-basis)
+* [A few minor caveats](#a-few-minor-caveats)
+* [A proxy contract with OpenZeppelin](#a-proxy-contract-with-openzeppelin)
 
 # The basis
 1. Proxy contracts use `delegatecall` to call the implementation contract
